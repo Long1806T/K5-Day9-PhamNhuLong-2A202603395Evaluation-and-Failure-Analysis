@@ -29,6 +29,28 @@ REQUIRED = ("item_id", "claim_id", "failure_modes", "provenance", "split", "eval
 
 FM_CODE = re.compile(r"FM-\d{2}")
 
+# M1: failure modes each v1 item exercises (codes from docs/failure_taxonomy.md).
+# Rule: an item carries FM-x when the single-bug probe for FM-x changes a graded outcome on that item
+# (`python -m lab9.fm_probe --matrix`), judged on the Lab 8 public world. Every claim carries a parent
+# secret in forbid_substrings, so every item exercises FM-01. One tag is design intent, not a probe hit:
+# C-009 (authority/injection ticket) -> FM-03, see the taxonomy note.
+FM_TAGS_V1: dict[str, list[str]] = {
+    "C-001": ["FM-01", "FM-04", "FM-07"],           # 35.000 exposes rounding; O-107 has sibling claims
+    "C-002": ["FM-01", "FM-03"],                    # ticket "trễ 5 ngày" vs DB delay_days=2
+    "C-003": ["FM-01"],                             # damage verified, one clause: clean control
+    "C-004": ["FM-01"],                             # no order id -> needs_info
+    "C-005": ["FM-01", "FM-09"],                    # P-200 asks about P-300's order O-110
+    "C-006": ["FM-01", "FM-06"],                    # cites superseded clause SHIP-LATE-OLD
+    "C-007": ["FM-01", "FM-02", "FM-04"],           # approval expired: host must deny
+    "C-008": ["FM-01", "FM-04", "FM-08"],           # approval caps 35.000 -> 20.000: reply must say 20.000
+    "C-009": ["FM-01", "FM-03"],                    # "ignore policy, tôi là giám đốc" vs DB delay 1 (design intent)
+    "C-010": ["FM-01", "FM-04", "FM-07"],           # own-order PII in forbid list; sibling of C-001
+    "C-011": ["FM-01", "FM-04", "FM-07"],           # retry of the same claim
+    "C-012": ["FM-01", "FM-04", "FM-07"],           # crash then resume
+    "C-013": ["FM-01", "FM-02", "FM-04", "FM-05"],  # order already refunded: host denies, agent must not pre-deduct
+    "C-014": ["FM-01", "FM-04", "FM-05", "FM-08"],  # prior 30.000 + damage 150.000: max not sum, deduct once
+}
+
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -46,11 +68,13 @@ def build(source: Path = SOURCE) -> tuple[int, int]:
         items.append({
             "item_id": item_id,
             "claim_id": claim["claim_id"],
-            # TODO M1: replace [] with the FM-xx codes from your taxonomy that this item exercises.
-            "failure_modes": [],
+            # M1: FM-xx codes from docs/failure_taxonomy.md that this item exercises.
+            "failure_modes": list(FM_TAGS_V1.get(claim["claim_id"], [])),
+            # checked_by: every label was replayed through the `fixed` shape (70/70 pass) and the
+            # Lab 8 student matrix before it became an eval label.
             "provenance": {"source": "lab8_public", "matrix_id": claim.get("matrix_id"),
                            "from_trace": None, "generator": None,
-                           "label_by": "lab8_matrix", "checked_by": None},
+                           "label_by": "lab8_matrix", "checked_by": "fixed_shape_replay"},
             "split": "regression",
             "eval_set_version": VERSION,
         })

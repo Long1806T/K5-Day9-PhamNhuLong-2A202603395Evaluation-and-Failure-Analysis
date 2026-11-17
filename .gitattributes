@@ -1,0 +1,7 @@
+# Keep fixtures byte-identical on every OS (Windows autocrlf would rewrite them).
+* text=auto eol=lf
+*.sqlite binary
+*.png binary
+*.pdf binary
+# Lab 9 starter ships the judge CSVs with CRLF; keep them byte-identical (judge data is not ours to touch).
+src/data/eval/*.csv -text
