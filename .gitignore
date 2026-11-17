@@ -1,5 +1,21 @@
+# Lab 9 starter
 __pycache__/
 *.pyc
 src/reports/
 src/traces/
 *.sqlite
+
+# Lab 8 (kept when importing the Lab 8 code): secrets, envs, runtime output, instructor-only pack
+.env
+.env.*
+!.env.example
+.venv/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+*.sqlite-*
+traces/
+student_drop/
+src/reports/hidden_grade.json
+src/reports/bonus_hidden.json
+src/eval/instructor/
